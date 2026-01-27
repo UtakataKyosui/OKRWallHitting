@@ -1,0 +1,40 @@
+$schema: 'https://moonrepo.dev/schemas/project.json'
+
+type: 'application'
+language: 'typescript'
+
+toolchain:
+  node:
+    version: '20.11.0'
+
+tasks:
+  dev:
+    command: 'dotenvx run -- next dev'
+    local: true
+
+  build:
+    command: 'dotenvx run -- next build'
+    inputs:
+      - 'src/**/*'
+      - 'next.config.ts'
+      - 'postcss.config.mjs' 
+      - 'tailwind.config.ts'
+      - 'package.json'
+    outputs:
+      - '.next'
+
+  start:
+    command: 'dotenvx run -- next start'
+    local: true
+
+  lint:
+    command: 'next lint'
+    inputs:
+      - 'src/**/*'
+      - '.eslintrc.json'
+
+  test:
+    command: 'dotenvx run -- vitest run'
+    inputs:
+      - 'src/**/*'
+      - 'vitest.config.mts'
