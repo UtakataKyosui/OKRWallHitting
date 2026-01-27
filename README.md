@@ -1,0 +1,2 @@
+# AntigravityWorkspaceTemplates
+Antigravityで開発する際のテンプレートリポジトリ
