@@ -305,6 +305,7 @@ function KeyResultSection({ control, name, label, description, colorClass, feedb
                                     name={`${name}.${index}.value`}
                                     render={({ field }) => (
                                         <FormItem>
+                                            <FormLabel>Key Result</FormLabel>
                                             <FormControl>
                                                 <AutosizeTextarea
                                                     placeholder={`${label} Key Result ${index + 1}`}
@@ -323,7 +324,8 @@ function KeyResultSection({ control, name, label, description, colorClass, feedb
                                     control={control}
                                     name={`${name}.${index}.deadline`}
                                     render={({ field: dateField }) => (
-                                        <FormItem className="space-y-0">
+                                        <FormItem>
+                                            <FormLabel>期限</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="date"

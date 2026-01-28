@@ -88,8 +88,11 @@ Do not include any markdown formatting (like \`\`\`json) in the response, just t
 
     let fullText = '';
     for await (const chunk of stream) {
+        console.log('Stream chunk:', JSON.stringify(chunk));
         if (chunk.type === 'content' && typeof chunk.delta === 'string') {
-            fullText = chunk.content;
+            fullText += chunk.delta;
+        } else if (chunk.type === 'error') {
+            console.error('Stream Error:', chunk.error);
         }
     }
 
