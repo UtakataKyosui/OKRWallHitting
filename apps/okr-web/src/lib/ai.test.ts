@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import { analyzeOKR } from './ai';
 import { chat } from '@tanstack/ai';
@@ -8,7 +9,7 @@ vi.mock('@tanstack/ai', () => ({
 }));
 
 vi.mock('@tanstack/ai-openrouter', () => ({
-    openRouterText: vi.fn(),
+    createOpenRouterText: vi.fn(),
 }));
 
 describe('analyzeOKR', () => {

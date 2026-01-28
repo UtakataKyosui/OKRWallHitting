@@ -1,5 +1,6 @@
-import { openRouterText } from '@tanstack/ai-openrouter';
+import { createOpenRouterText } from '@tanstack/ai-openrouter';
 import { chat } from '@tanstack/ai';
+import { env } from '@/env';
 
 interface KeyResult {
     value: string;
@@ -78,7 +79,7 @@ Do not include any markdown formatting (like \`\`\`json) in the response, just t
 `;
 
     const stream = await chat({
-        adapter: openRouterText('google/gemini-2.0-flash-exp:free'),
+        adapter: createOpenRouterText('google/gemini-2.0-flash-exp:free', env.OPENROUTER_API_KEY),
         systemPrompts: ['You are a helpful assistant specialized in OKRs. You always respond in valid JSON.'],
         messages: [
             { role: 'user', content: prompt },
