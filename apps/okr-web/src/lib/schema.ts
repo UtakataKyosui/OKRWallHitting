@@ -17,6 +17,7 @@ export const formSchema = z.object({
     technicalKRs: z.array(krSchema).min(1, { message: '技術力のOKRは少なくとも1つ必要です。' }),
     softSkillsKRs: z.array(krSchema).min(1, { message: 'ソフトスキルのOKRは少なくとも1つ必要です。' }),
     talentDevKRs: z.array(krSchema).min(1, { message: '人材育成のOKRは少なくとも1つ必要です。' }),
+    performanceKRs: z.array(krSchema).min(1, { message: '業績目標のOKRは少なくとも1つ必要です。' }),
 });
 
 export type FormValues = z.infer<typeof formSchema>;

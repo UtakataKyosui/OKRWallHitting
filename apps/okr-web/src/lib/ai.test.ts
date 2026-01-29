@@ -20,6 +20,7 @@ describe('analyzeOKR', () => {
     it('should call TanStack AI chat with correct prompt and return suggestions', async () => {
         const mockJson = JSON.stringify({
             general: 'Good OKR',
+            performance: 'Performance feedback',
             technical: 'Tech feedback',
             softSkills: 'Soft feedback',
             talentDevelopment: 'Growth feedback',
@@ -35,6 +36,7 @@ describe('analyzeOKR', () => {
 
         const inputs = {
             objective: 'Get better at coding',
+            performanceKRs: [{ value: 'Increase revenue', actionPlans: [] }],
             technicalKRs: [{ value: 'Write code', actionPlans: ['Practice daily'] }],
             softSkillsKRs: [{ value: 'Mentor juniors', actionPlans: [] }],
             talentDevKRs: [{ value: 'Write blog', actionPlans: [] }],
@@ -44,6 +46,7 @@ describe('analyzeOKR', () => {
 
         expect(result).toEqual({
             general: 'Good OKR',
+            performance: 'Performance feedback',
             technical: 'Tech feedback',
             softSkills: 'Soft feedback',
             talentDevelopment: 'Growth feedback',
@@ -52,7 +55,6 @@ describe('analyzeOKR', () => {
 
         expect(chat).toHaveBeenCalledWith(expect.objectContaining({
             // We can check if adapter is passed, but checking messages is most critical for the prompt logic
-            systemPrompts: expect.arrayContaining([expect.stringContaining('JSON')]),
             messages: expect.arrayContaining([
                 expect.objectContaining({
                     role: 'user',

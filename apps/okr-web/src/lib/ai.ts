@@ -13,6 +13,7 @@ interface OKRInputs {
     technicalKRs: KeyResult[];
     softSkillsKRs: KeyResult[];
     talentDevKRs: KeyResult[];
+    performanceKRs: KeyResult[];
 }
 
 export interface FeedbackObject {
@@ -20,6 +21,7 @@ export interface FeedbackObject {
     technical: string;
     softSkills: string;
     talentDevelopment: string;
+    performance: string;
     revisedOKR: string;
 }
 
@@ -37,6 +39,7 @@ export async function analyzeOKR(inputs: OKRInputs): Promise<FeedbackObject> {
     };
 
     const details =
+        formatKRs(inputs.performanceKRs, 'Business Performance') +
         formatKRs(inputs.technicalKRs, 'Technical Skills') +
         formatKRs(inputs.softSkillsKRs, 'Soft Skills') +
         formatKRs(inputs.talentDevKRs, 'Talent Development');
@@ -49,7 +52,7 @@ Objective: "${inputs.objective}"
 ${details}
 
 Evaluate this OKR based on best practices and the engineering pillars.
-The user has provided inputs categorized by Technical, Soft Skills, and Talent Development.
+The user has provided inputs categorized by Business Performance, Technical, Soft Skills, and Talent Development.
 
 **Evaluation Criteria for Key Results:**
 1.  **Binary Outcome**: It must be immediately clear whether the result was achieved or not (Yes/No).
@@ -69,6 +72,7 @@ IMPORTANT: The values of your JSON response MUST BE IN JAPANESE.
 You MUST output your response in strict JSON format with the following keys:
 You MUST output your response in strict JSON format with the following keys:
 - "general": General feedback on the Objective and KRs quality.
+- "performance": Specific feedback related to Business Performance.
 - "technical": Specific feedback related to Technical Skills.
 - "softSkills": Specific feedback related to Soft Skills.
 - "talentDevelopment": Specific feedback related to Talent Development.
@@ -78,17 +82,17 @@ Ensure all values are in Japanese.
 Do not include any markdown formatting (like \`\`\`json) in the response, just the raw JSON object.
 `;
 
+    const combinedPrompt = `${prompt}\n\nIMPORTANT: You are a helpful assistant specialized in OKRs. You always respond in valid JSON. The values of your JSON response MUST BE IN JAPANESE.`;
+
     const stream = await chat({
-        adapter: createOpenRouterText('google/gemini-2.0-flash-exp:free', env.OPENROUTER_API_KEY),
-        systemPrompts: ['You are a helpful assistant specialized in OKRs. You always respond in valid JSON.'],
+        adapter: createOpenRouterText('mistralai/mistral-small-3.1-24b-instruct:free', env.OPENROUTER_API_KEY),
         messages: [
-            { role: 'user', content: prompt },
+            { role: 'user', content: combinedPrompt },
         ],
     });
 
     let fullText = '';
     for await (const chunk of stream) {
-        console.log('Stream chunk:', JSON.stringify(chunk));
         if (chunk.type === 'content' && typeof chunk.delta === 'string') {
             fullText += chunk.delta;
         } else if (chunk.type === 'error') {
@@ -97,6 +101,9 @@ Do not include any markdown formatting (like \`\`\`json) in the response, just t
     }
 
     try {
+        if (!fullText) {
+            throw new Error('AI returned empty response (potential provider error)');
+        }
         // Clean up potential markdown code blocks if the model ignores instructions
         let cleanText = fullText.replace(/```json\n?|```/g, '').trim();
 
@@ -109,15 +116,24 @@ Do not include any markdown formatting (like \`\`\`json) in the response, just t
         }
 
         return JSON.parse(cleanText) as FeedbackObject;
-    } catch (e) {
+    } catch (e: any) {
         console.error('Failed to parse AI response:', e);
-        console.error('Raw text:', fullText); // Log raw text for debugging
+
+        // Default error message
+        let errorMessage = 'AIからの応答の解析に失敗しました。もう一度試してください。';
+
+        // Detect specific provider errors
+        if (e.message?.includes('provider error') || fullText.includes('Provider returned error')) {
+            errorMessage = '現在、AIプロバイダー（OpenRouter/Google）が混雑しているか、無料枠のレート制限にかかっています。しばらく時間を置いてから再試行してください。';
+        }
+
         return {
-            general: 'AIからの応答の解析に失敗しました。もう一度試してください。',
+            general: errorMessage,
             technical: '',
             softSkills: '',
             talentDevelopment: '',
-            revisedOKR: fullText // Fallback to raw text
+            performance: '',
+            revisedOKR: '' // Do not show raw text for provider errors as it is confusing
         };
     }
 }

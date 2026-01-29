@@ -7,6 +7,6 @@ export const env = createEnv({
         OPENROUTER_API_KEY: z.string().min(1),
     },
     "runtimeEnv": {
-        OPENROUTER_API_KEY: dotenvx.get("OPENROUTER_API_KEY"),
+        OPENROUTER_API_KEY: dotenvx.get("OPENROUTER_API_KEY") || process.env.OPENROUTER_API_KEY,
     }
 });

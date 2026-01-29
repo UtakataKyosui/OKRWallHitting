@@ -5,7 +5,7 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
+import { submitOKR } from '@/app/actions';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -42,6 +42,10 @@ export function OKRInputForm() {
         resolver: zodResolver(formSchema),
         defaultValues: {
             objective: '',
+            performanceKRs: [
+                { value: '', deadline: '', actionPlans: [{ value: '' }] },
+                { value: '', deadline: '', actionPlans: [{ value: '' }] }
+            ],
             technicalKRs: [
                 { value: '', deadline: '', actionPlans: [{ value: '' }] },
                 { value: '', deadline: '', actionPlans: [{ value: '' }] }
@@ -59,20 +63,7 @@ export function OKRInputForm() {
 
     const mutation = useMutation({
         mutationFn: async (values: FormValues) => {
-            // Helper to map KRs
-            const mapKRs = (krs: any[]) => krs.map(kr => ({
-                value: kr.value,
-                deadline: kr.deadline,
-                actionPlans: kr.actionPlans?.map((ap: any) => ap.value) || []
-            }));
-
-            const response = await axios.post('/api/analyze', {
-                objective: values.objective,
-                technicalKRs: mapKRs(values.technicalKRs),
-                softSkillsKRs: mapKRs(values.softSkillsKRs),
-                talentDevKRs: mapKRs(values.talentDevKRs),
-            });
-            return response.data.feedback;
+            return await submitOKR(values);
         },
         onSuccess: (data, variables) => {
             setFeedback(data);
@@ -139,6 +130,18 @@ export function OKRInputForm() {
                                                     <div className="p-1">
                                                         <KeyResultSection
                                                             control={form.control}
+                                                            name="performanceKRs"
+                                                            label="業績目標 (Business Performance)"
+                                                            description="売上貢献、コスト削減、プロジェクトの成功など"
+                                                            colorClass="border-l-blue-500"
+                                                            feedback={feedback && typeof feedback !== 'string' ? feedback.performance : undefined}
+                                                        />
+                                                    </div>
+                                                </CarouselItem>
+                                                <CarouselItem>
+                                                    <div className="p-1">
+                                                        <KeyResultSection
+                                                            control={form.control}
                                                             name="technicalKRs"
                                                             label="技術力 (Technical Skills)"
                                                             description="AI活用、コーディング速度・品質、アーキテクチャ設計など"
@@ -198,7 +201,7 @@ export function OKRInputForm() {
                                     <Alert className="border-green-500 bg-green-50 dark:bg-green-900/20">
                                         <AlertTitle className="text-green-700 dark:text-green-300 font-bold mb-2">改善後のOKR案</AlertTitle>
                                         <AlertDescription className="whitespace-pre-wrap text-foreground font-mono text-sm">
-                                            {feedback.revisedOKR}
+                                            <RenderRevisedOKR content={feedback.revisedOKR} />
                                         </AlertDescription>
                                     </Alert>
                                 )}
@@ -247,9 +250,9 @@ export function OKRInputForm() {
                                                     {typeof item.feedback !== 'string' && (
                                                         <div>
                                                             <p className="font-bold mb-1">改善案:</p>
-                                                            <p className="line-clamp-3 text-muted-foreground font-mono">
-                                                                {item.feedback.revisedOKR}
-                                                            </p>
+                                                            <div className="line-clamp-3 text-muted-foreground font-mono">
+                                                                <RenderRevisedOKR content={item.feedback.revisedOKR} />
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -376,6 +379,38 @@ function KeyResultSection({ control, name, label, description, colorClass, feedb
             )}
         </div>
     );
+}
+
+function RenderRevisedOKR({ content }: { content: any }) {
+    if (!content) return null;
+    if (typeof content === 'string') {
+        return <>{content}</>;
+    }
+    if (typeof content === 'object') {
+        return (
+            <div className="space-y-2 text-left">
+                {content.objective && (
+                    <div className="font-semibold">Objective: {content.objective}</div>
+                )}
+                {content.keyResults && Array.isArray(content.keyResults) && (
+                    <ul className="list-disc pl-5 space-y-1">
+                        {content.keyResults.map((kr: any, i: number) => (
+                            <li key={i}>
+                                {typeof kr === 'string' ? kr : (kr.value || JSON.stringify(kr))}
+                                {kr.deadline && <span className="text-xs text-muted-foreground ml-2">(Due: {kr.deadline})</span>}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+                {!content.objective && !content.keyResults && (
+                    <pre className="whitespace-pre-wrap font-mono text-xs">
+                        {JSON.stringify(content, null, 2)}
+                    </pre>
+                )}
+            </div>
+        );
+    }
+    return null;
 }
 
 function ActionPlanList({ nestName, control }: { nestName: string; control: any }) {
